@@ -21,34 +21,7 @@ var gameRooms = {
 		})
 	},
 
-	closeRoom: function(room){
-		var id = room.id;
-		var link = '/invite_' + id
-
-		app.get(link, (req, res) => {
-			res.send('room is closed')
-		})
-	},
-
-	openRoom: function(room){
-		var id = room.id;
-		var link = '/invite_' + id
-
-		app.get(link, (req, res) => {
-			res.sendFile(__dirname + '/public/index.html')
-		})
-	},
-
-	// no need
-	findRoomByPlayerId: function(id){
-		for(var room of this.rooms){
-			if(~room.players.indexOf(id)){
-				return room
-			}
-		}
-
-		return false;
-	}
+	removeRoom : function(room){}
 }
 
 
@@ -69,6 +42,10 @@ require('./app/server-app.js')(http, io, gameRooms, players)
 app.get('/', (req, res) => {
 	res.sendFile(__dirname + '/public/index.html')
 })
+
+/*app.get('/invite_:id', (req, res) => {
+	res.sendFile(__dirname + '/public/index.html')
+})*/
 
 /*
 app.post('/game', (req, res) => {

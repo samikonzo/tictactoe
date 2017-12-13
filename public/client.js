@@ -1,7 +1,7 @@
 var l = console.log;
 var wrapper = document.getElementsByClassName('wrapper')[0];
 var mask = document.getElementsByClassName('mask')[0];
-var game = new Battlefield(wrapper, mask);
+var game = new Battlefield(wrapper, mask, socket);
 
 
 socket.on('waiting', props => {
@@ -12,18 +12,28 @@ socket.on('start', props => {
 	game.start(props.turn)
 })
 
+socket.on('place', props => {
+	game.place(props.cell, props.sign)
+})
+
 socket.on('nextTurn', props => {
-	//deploy new enemy position
-	//deploy new your position
-	//allow next turn
+	game.nextTurn()
 })
 
 socket.on('endGame', props => {
-	// win or false?
+	var state = props.state
+	var statistic = props.statistic
+	var win = props.win
+	game.endGame(state,statistic,win)
+})
+
+socket.on('enable', yes => {
+	if(yes) game.enable()
+	else game.disable()
 })
 
 
-function Battlefield(wrap, mask){
+function Battlefield(wrap, mask, socket){
 	const infobar = wrap.getElementsByClassName('infobar')[0]
 	const playground = wrap.getElementsByClassName('playground')[0]
 	const chat = wrap.getElementsByClassName('chat')[0]
@@ -40,7 +50,7 @@ function Battlefield(wrap, mask){
 		var target = e.target;
 
 		if(target.nodeName != 'TD') return
-		if(!playerTurn) return
+		if(!playerTurn || !playground.enable) return
 		if(target.buzy) return
 
 		var item = {
@@ -48,14 +58,8 @@ function Battlefield(wrap, mask){
 			cell : target.cellIndex,
 		}
 
-		l(item)
-
 		socket.emit('checkCell', item)
-		/*target.buzy = true;
-		target.innerHTML = playerSign;*/
-
-
-		/*enemyTurn()*/
+		playgroundDisable()
 	}
 
 	mask.onclick = function(e){
@@ -105,12 +109,10 @@ function Battlefield(wrap, mask){
 	/////////////////////////////////////
 
 	function wrapShow(){
-
 		wrap.style.opacity = 1;
 	}
 
 	function wrapHide(){
-
 		wrap.style.opacity = 0;
 	}
 
@@ -155,15 +157,17 @@ function Battlefield(wrap, mask){
 	}
 
 	function playgroundEnable(){
+		playground.enable = true
 		playground.classList.remove('playground--disabled')
 	}
 
 	function playgroundDisable(){
+		playground.enable = false
 		playground.classList.add('playground--disabled')
 	}
 
 	this.waiting = function(link){
-		var href = window.location.href.split('/invite')[0]
+		var href = window.location.href.split('invite')[0]
 		maskLink.textContent = href + link;
 		maskLink.href = maskLink.textContent
 
@@ -177,12 +181,33 @@ function Battlefield(wrap, mask){
 		playgroundClear()
 
 		if(turn){
-			playerSign = 'X';
+			playerSign = 'X'
 			yourTurn()
 		} else {
+			playerSign = '0'
 			enemyTurn()
 		}
 	}
 
-	this.nextTurn = function(){}
+	this.nextTurn = function(){
+		if(playerTurn){
+			enemyTurn()
+		} else {
+			yourTurn()
+		}
+	}
+
+	this.place = function(cell, sign){
+		var td = playground.rows[cell.row].cells[cell.cell];
+		td.buzy = true;
+		td.innerHTML = sign		
+	}
+
+	this.endGame = function(state,statistic,win){
+		
+	}
+
+
+	this.disable = playgroundDisable
+	this.enable = playgroundEnable
 }
