@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>tick tack toe game</title>
+	<link rel="stylesheet" type="text/css" href="stylesheet.css">
+</head>
+<body>
+	<div class="wrapper">
+		<div class="infobar">
+			<p class="infobar__player"> место для надписи, чем играет игрок! </p>
+			<p class="infobar__turn"> место для надписи, чей сейчас ход</p>
+			<table>
+				<tr>
+					<td>X</td>
+					<td>O</td>
+					<td>Ничья</td>
+				</tr>
+
+				<tr>
+					<td>X побед</td>
+					<td>O побед</td>
+					<td> количество ничьих</td>
+				</tr>
+
+
+			</table>
+		</div>
+
+		<table class="playground">
+			<tr>
+				<td class="playground__cell">1</td>
+				<td class="playground__cell">2</td>
+				<td class="playground__cell">3</td>
+			</tr>
+			<tr>
+				<td class="playground__cell">4</td>
+				<td class="playground__cell">5</td>
+				<td class="playground__cell">6</td>
+			</tr>
+			<tr>
+				<td class="playground__cell">7</td>
+				<td class="playground__cell">8</td>
+				<td class="playground__cell">9</td>
+			</tr>
+		</table>
+
+		<div class="chat">
+			<div class="chat__log"></div>
+			<input type="text" class="chat__input">
+			<input type="submit" value="send" class="chat__send">
+		</div>
+	</div>
+
+	<div class="mask">
+		<p> waiting for the enemy </p>
+		<!-- <p> invite link : <span class="mask__inviteLink"></span></p> -->
+		<p> invite link : <a href="mask__inviteLink" class="mask__inviteLink" href="#"></a></p>
+		<p> (click for copy to clipboard)</p>
+	</div>
+</body>
+
+<script src="/reload/reload.js"></script>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+	var socket = io();
+	socket.emit('connection', window.location.href)
+</script>
+<script src="client.js"></script>
+
+</html>

@@ -1,0 +1,20 @@
+{
+  "name": "tick_tack_toe",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "dev": "nodemon --watch app.js --watch public/index.html --watch app/server.js --watch public/client.js -w public/stylesheet.css -w public/index-blank.html -w app/server-app.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.16.2",
+    "socket.io": "^2.0.4",
+    "reload": "^2.2.1"
+  },
+  "devDependencies": {
+    "nodemon": "^1.12.5"
+  }
+}
