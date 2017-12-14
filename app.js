@@ -6,10 +6,8 @@ const reload		= require('reload')
 const PORT 			= process.env.PORT || 3000
 const l 			= console.log
 
-var players = []
 var gameRooms = {
 	rooms : {},
-
 	addRoom : function(room){
 		var id = room.id
 		this.rooms[id] = room;
@@ -20,7 +18,6 @@ var gameRooms = {
 			res.sendFile(__dirname + '/public/index.html')
 		})
 	},
-
 	removeRoom : function(roomID){
 		delete this.rooms[roomID]
 	}
@@ -36,7 +33,7 @@ reload(app)
 /* 
 *	link to socket logic 
 */
-require('./app/server-app.js')(http, io, gameRooms, players)
+require('./app/server-app.js')(http, io, gameRooms)
 
 /*
 *	index page

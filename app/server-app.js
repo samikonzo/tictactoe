@@ -6,10 +6,6 @@ module.exports = function(app, io, gameRooms, players) {
 			id: socket.id,
 			room: undefined,
 		}
-		//var player_ID = socket.id;
-		//var player_room = undefined;
-		//l(socket.id, 'connected');
-
 
 		socket.on('connection', url => {
 			// check invite and connect or create new room
@@ -18,7 +14,6 @@ module.exports = function(app, io, gameRooms, players) {
 				createRoom(player)
 			} else {
 				invite_ID = invite_ID[1]
-				l('invite_ID : ', invite_ID)
 				roomConnect(invite_ID, player)
 			}
 		})
@@ -65,7 +60,6 @@ module.exports = function(app, io, gameRooms, players) {
 			player.room = gameRooms.rooms[room_ID];
 		} else {
 			l(' no room, create new')
-			//redirect ??
 			createRoom(player)
 		}
 	}
@@ -76,9 +70,9 @@ module.exports = function(app, io, gameRooms, players) {
 
 		// is it important to make props accessible from the outside???
 		this.id = id
-		this.players = []
-		this.turn = undefined
-		this.sign = undefined // 0 for X; 1 for 0...change?
+		var players = []
+		var turn = undefined
+		var sign = undefined // 0 for X; 1 for 0...change?
 		this.state = null
 		this.statistic = {
 			'X' : 0,
@@ -92,7 +86,7 @@ module.exports = function(app, io, gameRooms, players) {
 
 		// room
 		function addPlayer(newPlayer_ID){
-			that.players.push(newPlayer_ID)
+			players.push(newPlayer_ID)
 			var socket = io.sockets.connected[newPlayer_ID];
 			socket.join(that.id)
 
@@ -100,9 +94,9 @@ module.exports = function(app, io, gameRooms, players) {
 		}
 
 		function removePlayer(player_ID){
-			var index = that.players.indexOf(player_ID);
+			var index = players.indexOf(player_ID);
 			if(index == -1) return
-			that.players.splice(index,1)
+			players.splice(index,1)
 
 			clearGame()
 			
@@ -110,10 +104,10 @@ module.exports = function(app, io, gameRooms, players) {
 		}
 
 		function checkCountOfPlayers(){
-			if(that.players.length >= 2){
-				socketX = io.sockets.connected[that.players[0]];
-				socketO = io.sockets.connected[that.players[1]];
-				if(that.players.length > 2) whatchmen = that.players.slice(2);
+			if(players.length >= 2){
+				socketX = io.sockets.connected[players[0]];
+				socketO = io.sockets.connected[players[1]];
+				if(players.length > 2) whatchmen = players.slice(2);
 
 				if(that.state != 'started'){
 					start()
@@ -121,27 +115,27 @@ module.exports = function(app, io, gameRooms, players) {
 					 // give watchmen emit 'watch'
 				}
 
-			} else if(that.players.length == 0){
+			} else if(players.length == 0){
 				l('remove room')
 				gameRooms.removeRoom(that.id)
 
-			} else if(that.players.length < 2) {
+			} else if(players.length < 2) {
 				waiting()
 			}
 		}
 		
 		function checkCell(player, cell){
-			if(that.players[that.turn] != player.id){
+			if(players[turn] != player.id){
 				l('not this player turn!')
 				return
 			}
 
 			if(that.game[cell.row][cell.cell] === undefined){
-				that.game[cell.row][cell.cell] = that.turn
+				that.game[cell.row][cell.cell] = turn
 
 				io.to(that.id).emit('place', {
 					cell: cell,
-					sign: that.sign,
+					sign: sign,
 				})
 
 				//if no one win -> nextTurn
@@ -255,8 +249,8 @@ module.exports = function(app, io, gameRooms, players) {
 
 			switch(state){
 				case 'win'	: 
-							that.statistic[that.sign]++
-							l('WINNER : ', that.sign)
+							that.statistic[sign]++
+							l('WINNER : ', sign)
 							break;
 				case 'draw'	: 
 							that.statistic.draw++
@@ -267,7 +261,7 @@ module.exports = function(app, io, gameRooms, players) {
 			io.to(that.id).emit('endGame', {
 				state: state,
 				statistic: that.statistic,
-				winSign: that.sign,
+				winSign: sign,
 				winArr: winArr
 			})
 		}
@@ -287,8 +281,8 @@ module.exports = function(app, io, gameRooms, players) {
 
 		function start(){
 			that.state = 'started'
-			that.turn = 0 // num in players array
-			that.sign = 'X' // first 
+			turn = 0 // num in players array
+			sign = 'X' // first 
 
 			socketX.emit('start', {turn: true})
 			socketO.emit('start', {turn: false})
@@ -299,12 +293,12 @@ module.exports = function(app, io, gameRooms, players) {
 		}
 
 		function nextTurn(){
-			if(that.turn == 0){
-				that.turn = 1
-				that.sign = '0'
+			if(turn == 0){
+				turn = 1
+				sign = '0'
 			} else {
-				that.turn = 0 
-				that.sign = 'X'
+				turn = 0 
+				sign = 'X'
 			}
 
 			//emit everyone
@@ -315,14 +309,14 @@ module.exports = function(app, io, gameRooms, players) {
 			clearGame()
 
 			if(socket == socketX){
-				that.turn = 0 // num in players array
-				that.sign = 'X' // first 
+				turn = 0 // num in players array
+				sign = 'X' // first 
 
 				socketX.emit('restart', {turn: true})
 				socketO.emit('restart', {turn: false})
 			} else {
-				that.turn = 1
-				that.sign = '0' // first 
+				turn = 1
+				sign = '0' // first 
 
 				socketX.emit('restart', {turn: false})
 				socketO.emit('restart', {turn: true})

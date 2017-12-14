@@ -74,7 +74,7 @@ function Battlefield(wrap, mask, socket){
 	var playerSign = undefined;
 	var playerEnemySign = undefined;
 	var chatShowTyping,chatShowTimer;
-	
+
 	/*
 	*	Listeners
 	*/
@@ -197,9 +197,7 @@ function Battlefield(wrap, mask, socket){
 	}
 
 	this.showTyping = function(sign){
-		l('showTyping!!')
 		if(!chatShowTyping){
-			l('create shower')
 			var block = document.createElement('div');
 			block.classList.add('message-typing');
 
@@ -346,6 +344,14 @@ function Battlefield(wrap, mask, socket){
 		playground.classList.add('playground--disabled')
 	}
 
+	function resizeCell(td){
+		td.classList.add('bigSize');
+
+		setTimeout(function(){
+			td.classList.remove('bigSize')
+		}, 1000)
+	}
+
 	this.waiting = function(link){
 		var href = window.location.href.split('invite')[0]
 		maskLink.textContent = href + link;
@@ -409,11 +415,19 @@ function Battlefield(wrap, mask, socket){
 							popup.classList.add('popup--fail')
 							popupMessage.innerHTML = 'Вы проиграли'
 						}
-						popupShow()
+
+						winArr.forEach(cell => {
+							var rowNum = cell[0]
+							var cellNum = cell[1]
+							var td = playground.rows[rowNum].cells[cellNum];
+							resizeCell(td)
+						})
+
+						setTimeout(function(){
+							popupShow()
+						}, 1000)
 						break;
 		}
-		//l(winArr)
-		//highlight winarr!
 	}
 
 	this.restart = function(turn){

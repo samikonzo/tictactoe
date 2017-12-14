@@ -94,6 +94,26 @@ html, body{
 	transition: 1s;
 }
 
+.playground__cell.bigSize{
+	font-size: 80px;
+	color: red;
+	animation: shake .5s ease-in-out 0s infinite alternate;
+}
+
+@keyframes shake{
+	from{
+		transform: rotate(0deg);
+	}
+
+	50%{
+		transform: rotate(-30deg);
+	}
+
+	to{
+		transform: rotate(30deg);
+	}
+}
+
 .popup{
 	position: absolute;
 	top: 0;
