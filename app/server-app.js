@@ -30,6 +30,24 @@ module.exports = function(app, io, gameRooms, players) {
 		socket.on('checkCell', item =>{
 			player.room.checkCell(player, item)
 		})
+
+		socket.on('restartGame', props => {
+			player.room.restartGame(socket)
+		})
+
+		socket.on('chatTyping', props => {
+			var sign = props.sign
+			player.room.showTyping(sign, socket)
+		})
+
+		socket.on('chatMessage', props => {
+			var msg = props.msg
+			var from = props.from
+
+			player.room.sendMessage(msg, from)
+
+		})
+
 	})
 	
 
@@ -60,7 +78,7 @@ module.exports = function(app, io, gameRooms, players) {
 		this.id = id
 		this.players = []
 		this.turn = undefined
-		this.sign = undefined
+		this.sign = undefined // 0 for X; 1 for 0...change?
 		this.state = null
 		this.statistic = {
 			'X' : 0,
@@ -85,6 +103,8 @@ module.exports = function(app, io, gameRooms, players) {
 			var index = that.players.indexOf(player_ID);
 			if(index == -1) return
 			that.players.splice(index,1)
+
+			clearGame()
 			
 			checkCountOfPlayers()
 		}
@@ -102,8 +122,8 @@ module.exports = function(app, io, gameRooms, players) {
 				}
 
 			} else if(that.players.length == 0){
-				//remove room
-				l('remove room please')
+				l('remove room')
+				gameRooms.removeRoom(that.id)
 
 			} else if(that.players.length < 2) {
 				waiting()
@@ -118,8 +138,6 @@ module.exports = function(app, io, gameRooms, players) {
 
 			if(that.game[cell.row][cell.cell] === undefined){
 				that.game[cell.row][cell.cell] = that.turn
-
-				l('that turn : ', that.turn)
 
 				io.to(that.id).emit('place', {
 					cell: cell,
@@ -233,7 +251,7 @@ module.exports = function(app, io, gameRooms, players) {
 		}
 
 		function endGame(state, winArr){
-			l(' END GAME ')
+			that.state = 'ended'
 
 			switch(state){
 				case 'win'	: 
@@ -249,13 +267,13 @@ module.exports = function(app, io, gameRooms, players) {
 			io.to(that.id).emit('endGame', {
 				state: state,
 				statistic: that.statistic,
-				win: that.sign,
+				winSign: that.sign,
 				winArr: winArr
 			})
 		}
 
 		function clearGame(){
-
+			that.game = [new Array(3), new Array(3), new Array(3)]
 		}
 
 		// client
@@ -269,7 +287,7 @@ module.exports = function(app, io, gameRooms, players) {
 
 		function start(){
 			that.state = 'started'
-			that.turn = 0 // line num in players array
+			that.turn = 0 // num in players array
 			that.sign = 'X' // first 
 
 			socketX.emit('start', {turn: true})
@@ -293,11 +311,56 @@ module.exports = function(app, io, gameRooms, players) {
 			io.to(that.id).emit('nextTurn')
 		}
 
-		
+		function restartGame(socket){
+			clearGame()
+
+			if(socket == socketX){
+				that.turn = 0 // num in players array
+				that.sign = 'X' // first 
+
+				socketX.emit('restart', {turn: true})
+				socketO.emit('restart', {turn: false})
+			} else {
+				that.turn = 1
+				that.sign = '0' // first 
+
+				socketX.emit('restart', {turn: false})
+				socketO.emit('restart', {turn: true})
+			}
+		}		
+
+		function sendMessage(msg, from){
+			io.to(that.id).emit('chatMessage', {
+				msg: msg,
+				from: from,
+				time: getCurrentTime(),
+			})
+		}
+
+		function showTyping(sign, socket){
+			if(socket == socketX){
+				socketO.emit('chatTyping', {
+					sign: sign,
+					show: true
+				})
+			} else {
+				socketX.emit('chatTyping', {
+					sign: sign,
+					show: true
+				})
+			}
+		}
+
+		function getCurrentTime(){
+			return (new Date()).toLocaleTimeString();
+		}
 
 		//external func
 		this.addPlayer = addPlayer
 		this.removePlayer = removePlayer
 		this.checkCell = checkCell
+		this.restartGame = restartGame
+		this.sendMessage = sendMessage
+		this.showTyping = showTyping
 	}
 }

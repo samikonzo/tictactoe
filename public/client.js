@@ -23,9 +23,13 @@ socket.on('nextTurn', props => {
 socket.on('endGame', props => {
 	var state = props.state
 	var statistic = props.statistic
-	var win = props.win
+	var winSign = props.winSign
 	var winArr = props.winArr
-	game.endGame(state, statistic, win, winArr)
+	game.endGame(state, statistic, winSign, winArr)
+})
+
+socket.on('restart', props=> {
+	game.restart(props.turn)
 })
 
 socket.on('enable', yes => {
@@ -33,17 +37,44 @@ socket.on('enable', yes => {
 	else game.disable()
 })
 
+socket.on('chatMessage', props => {
+	var msg = props.msg
+	var from = props.from
+	var time = props.time
+
+	game.newMessage(msg, from, time)
+})
+
+socket.on('chatTyping', props => {
+	var sign = props.sign
+
+	game.showTyping(sign)
+})
+
 
 function Battlefield(wrap, mask, socket){
 	const infobar = wrap.getElementsByClassName('infobar')[0]
+	const infobarSignPlayer = infobar.getElementsByClassName('infobar-signs__player')[0]
+	const infobarSignTurn = infobar.getElementsByClassName('infobar-signs__turn')[0]
+	const infobarWinsX = infobar.getElementsByClassName('infobar__wins-X')[0]
+	const infobarWins0 = infobar.getElementsByClassName('infobar__wins-0')[0]
+	const infobarWinsDraw = infobar.getElementsByClassName('infobar__wins-draw')[0]
 	const playground = wrap.getElementsByClassName('playground')[0]
+	const popup = wrap.getElementsByClassName('popup')[0]
+	const popupMessage = popup.getElementsByClassName('popup__message')[0]
+	const restartBtn = popup.getElementsByClassName('popup__restart-button')[0]
 	const chat = wrap.getElementsByClassName('chat')[0]
+	const chatLog = chat.getElementsByClassName('chat__log')[0]
+	const chatInput = chat.getElementsByClassName('chat__input')[0]
+	const chatSendBtn = chat.getElementsByClassName('chat__send')[0]
 	const maskLink = mask.getElementsByClassName('mask__inviteLink')[0]
 
 	var stats = {};
 	var playerTurn = false;
 	var playerSign = undefined;
-
+	var playerEnemySign = undefined;
+	var chatShowTyping,chatShowTimer;
+	
 	/*
 	*	Listeners
 	*/
@@ -107,7 +138,121 @@ function Battlefield(wrap, mask, socket){
 		}, 10)
 	}
 
+	restartBtn.onclick = function(e){
+
+		socket.emit('restartGame')
+	}
+
 	/////////////////////////////////////
+
+	/*
+	*	Chat
+	*/
+	chatInput.onkeypress = function(e){
+		if(e.which == 13){
+			sendMessage()
+			return
+		} 
+	}
+
+	chatInput.onkeydown = function(e){
+		socket.emit('chatTyping', {
+			sign: playerSign
+		})
+	}
+
+	chatSendBtn.onclick = function(e){
+		sendMessage()
+	}
+
+	function sendMessage(){
+		var msg = chatInput.value;
+		if(msg == '') return
+
+		socket.emit('chatMessage', {
+			from: playerSign,
+			msg: msg,
+		})
+		chatInput.value = ''
+		return false
+	}
+
+	this.newMessage = function(msg, from, time){
+		var block = document.createElement('div');
+		block.classList.add('message');
+
+		if(from != playerSign){
+			block.classList.add('message--enemy')
+			this.removeTyping()
+		} else {
+			block.classList.add('message--my')
+		}		
+
+		block.innerHTML = `<span class="message__time">${time}</span>
+						   <span class="message__name">${from}</span> : 
+						   <span class="message__text">${msg}</span>`;
+
+		chatLog.appendChild(block);
+		chatLog.scrollTop = chatLog.scrollHeight;				   
+	}
+
+	this.showTyping = function(sign){
+		l('showTyping!!')
+		if(!chatShowTyping){
+			l('create shower')
+			var block = document.createElement('div');
+			block.classList.add('message-typing');
+
+			//block.innerHTML = `<span class="message-typing__name">${sign}</span> <span class="message-typing__circle">.</span>`
+			block.innerHTML = `противник печатает сообщение <span class="message-typing__circle">.</span> <span class="message-typing__circle">.</span> <span class="message-typing__circle">.</span>`
+
+			chatLog.appendChild(block)
+			chatLog.scrollTop = chatLog.scrollHeight;
+
+			chatShowTyping = block
+
+			chatShowTimer = setTimeout(function(){
+				block.remove()
+				chatShowTyping = undefined;
+			},1000)
+			
+		} else {
+			clearTimeout(chatShowTimer)
+			chatShowTimer = setTimeout(function(){
+				chatShowTyping.remove()
+				chatShowTyping = undefined;
+			},1000)
+		}
+	}
+
+	this.removeTyping = function(){
+		clearTimeout(chatShowTimer)
+		if(chatShowTyping){
+			chatShowTyping.remove()
+			chatShowTyping = undefined;
+		}
+	}
+
+	/////////////////////////////////////
+
+	function infobarSignRefresh(){
+		infobarSignPlayer.innerHTML = playerSign
+		infobarSignTurn.innerHTML = playerTurn ? playerSign : playerEnemySign
+	}
+
+	function infobarStatsRefresh(){
+		if(infobarWinsX.innerHTML != stats.X) infobarStatHideChangeShow(infobarWinsX, stats.X)
+		if(infobarWins0.innerHTML != stats['0']) infobarStatHideChangeShow(infobarWins0, stats[0])
+		if(infobarWinsDraw.innerHTML != stats.draw)	infobarStatHideChangeShow(infobarWinsDraw, stats.draw)
+	}	
+
+	function infobarStatHideChangeShow(stat, newValue){
+		stat.style.opacity = 0;
+		setTimeout(function(){
+			stat.innerHTML = newValue
+			stat.style.opacity = ''
+		}, 1000)
+	}
 
 	function wrapShow(){
 		wrap.style.opacity = 1;
@@ -131,14 +276,37 @@ function Battlefield(wrap, mask, socket){
 		}, 1000)
 	}
 
+	function popupShow(){
+		popup.style.display = 'flex';
+		//show popup
+		setTimeout(function(){
+			popup.style.opacity = 1;
+		}, 100)
+
+		//show restart button
+		setTimeout(function(){
+			restartBtn.style.opacity = 1;
+		},1000)
+	}
+
+	function popupHide(){
+		popup.style.opacity = ''
+		restartBtn.style.opacity = ''			
+		setTimeout(function(){
+			popup.style.display = '';
+		}, 1000)
+	}
+
 	function yourTurn(){
 		playerTurn = true;
 		playgroundEnable();
+		infobarSignRefresh()
 	}
 
 	function enemyTurn(){
 		playerTurn = false;
 		playgroundDisable()
+		infobarSignRefresh()
 	}
 
 	function playgroundClear(){
@@ -152,8 +320,19 @@ function Battlefield(wrap, mask, socket){
 
 		//clear tds
 		playground.tds.forEach( td => {
-			td.innerHTML = ''
-			delete td.buzy;
+			td.style.opacity = 0
+			
+			var wasEnabled = false
+			if(playground.enable){ 
+				wasEnabled = true
+				playgroundDisable()
+			}	
+
+			setTimeout(function(){
+				td.innerHTML = ''
+				if(wasEnabled) playgroundEnable()
+			}, 1000)
+			delete td.buzy
 		})
 	}
 
@@ -178,14 +357,17 @@ function Battlefield(wrap, mask, socket){
 
 	this.start = function(turn){
 		maskHide()
+		popupHide()
 		wrapShow()
 		playgroundClear()
 
 		if(turn){
 			playerSign = 'X'
+			playerEnemySign = '0'
 			yourTurn()
 		} else {
 			playerSign = '0'
+			playerEnemySign = 'X'
 			enemyTurn()
 		}
 	}
@@ -202,19 +384,54 @@ function Battlefield(wrap, mask, socket){
 		var td = playground.rows[cell.row].cells[cell.cell];
 		td.buzy = true;
 		td.innerHTML = sign		
+		td.style.opacity = 1;
 	}
 
-	this.endGame = function(state, statistic, win, winArr){
+	this.endGame = function(state, statistic, winSign, winArr){
+		popup.classList.remove('popup--fail')
+		popup.classList.remove('popup--win')
+		popup.classList.remove('popup--draw')
+
+		stats = statistic
+		infobarStatsRefresh()
+
 		switch(state){
 			case 'draw' :
+						popup.classList.add('popup--draw')
+						popupMessage.innerHTML = 'Ничья :|'
+						popupShow()
 						break;
 			case 'win'	:
+						if(winSign == playerSign){
+							popup.classList.add('popup--win')
+							popupMessage.innerHTML = 'Вы победили :D'
+						} else {
+							popup.classList.add('popup--fail')
+							popupMessage.innerHTML = 'Вы проиграли'
+						}
+						popupShow()
 						break;
 		}
-		l(winArr)
+		//l(winArr)
+		//highlight winarr!
 	}
+
+	this.restart = function(turn){
+		maskHide()
+		popupHide()
+		wrapShow()
+		playgroundClear()
+
+		if(turn){
+			yourTurn()
+		} else {
+			enemyTurn()
+		}
+	}
+
 
 
 	this.disable = playgroundDisable
 	this.enable = playgroundEnable
 }
+

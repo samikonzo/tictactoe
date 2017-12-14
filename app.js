@@ -21,7 +21,9 @@ var gameRooms = {
 		})
 	},
 
-	removeRoom : function(room){}
+	removeRoom : function(roomID){
+		delete this.rooms[roomID]
+	}
 }
 
 
@@ -43,35 +45,15 @@ app.get('/', (req, res) => {
 	res.sendFile(__dirname + '/public/index.html')
 })
 
-/*app.get('/invite_:id', (req, res) => {
-	res.sendFile(__dirname + '/public/index.html')
-})*/
-
 /*
-app.post('/game', (req, res) => {
-	l('request GAME')
-	res.redirect('/game')
+*	connect by invite
+*/
+app.get('/invite_:id', (req, res) => {
+	res.sendFile(__dirname + '/public/index.html')
 })
 
-app.get('/game', (req, res) => {
-	l('get game')
-	res.sendFile(__dirname + '/public/index.html')
-})*/
 
-/*
-*	Path for static files
-*/
 app.use(express.static('public'))
-
-
-
-/*
-* 404 page
-*/
-/*app.get('*', function(req, res){
-	l(req.params)
-	res.send('what???', 404);
-});*/
 
 
 
