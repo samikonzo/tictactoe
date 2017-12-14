@@ -139,12 +139,12 @@ module.exports = function(app, io, gameRooms, players) {
 		function checkEndGame(){
 			//try to find row with same elements
 			var game = that.game
-
 			
 			var elem1, elemCurrent, isSame
 			var emptyCells = false
 
-			// 1
+			// 1 // check horisontal rows for same sign in one
+				 // and check for empty cells
 			for(var i = 0; i < 3; i++){
 				elem1 = game[i][0]
 				
@@ -169,7 +169,7 @@ module.exports = function(app, io, gameRooms, players) {
 				}
 			} 
 
-			// 2
+			// 2 // check vertical columns for same sign in one
 			for(var i = 0; i < 3; i++){
 				elem1 = game[0][i]
 				if(elem1 == undefined) continue
@@ -188,17 +188,14 @@ module.exports = function(app, io, gameRooms, players) {
 				}
 			} 
 
-			// 3 d-1
+			// 3 d-1 // check first diagonal left-top to right-bottom
 			elem1 = game[0][0];
 			if(elem1 != undefined){
 				isSame = true
 
 				for(var i = 1; i < 3; i++){
 					elemCurrent = game[i][i]
-					if(elemCurrent != elem1){
-						l('elemCurrent :', elemCurrent, '   elem1', elem1)
-						isSame = false
-					}
+					if(elemCurrent != elem1) isSame = false
 				}
 				
 				if(isSame){
@@ -209,7 +206,7 @@ module.exports = function(app, io, gameRooms, players) {
 				}
 			}
 
-			// 4 d-2
+			// 4 d-2 // check second diagonal left-bottom to right-top
 			elem1 = game[0][2];
 			if(elem1 != undefined){
 				isSame = true
@@ -233,65 +230,6 @@ module.exports = function(app, io, gameRooms, players) {
 
 			return false;
 
-
-			/*for(var i = 0; i < 3; i++){
-				elem1 = game[0][i]
-				if(elem1 == undefined) continue
-				isSame = true
-
-				for(var k = 1; k < 3; k++){
-					elemCurrent = game[k][i]
-					if(elemCurrent != elem1) isSame = false
-				}
-
-				if(isSame){
-					endGame('win', [
-						[0,i], [1,i], [2,i]
-					])
-				}
-			} */
-
-
-
-			/*var arrays = [
-				//horisontal
-				[game[0][0], game[0][1], game[0][2]],
-				[game[1][0], game[1][1], game[1][2]],
-				[game[2][0], game[2][1], game[2][2]],
-				//vertical
-				[game[0][0], game[1][0], game[2][0]],
-				[game[0][1], game[1][1], game[2][1]],
-				[game[0][2], game[1][2], game[2][2]],
-				//diagonal
-				[game[0][0], game[1][1], game[2][2]],
-				[game[0][2], game[1][1], game[2][0]],
-			]
-
-
-			var currentArr
-			var emptyCells = false 
-			
-			for(var i = 0; i < arrays.length; i++){
-				currentArr = arrays[i];
-				var isEverySame = currentArr.every( item => {
-					if(item == undefined) emptyCells = true
-					return (item != undefined) && (item == currentArr[0])
-				})
-				
-				if(isEverySame){
-					endGame('win', currentArr)
-					l(currentArr)
-					return true
-				}
-			}
-
-			if(!emptyCells){
-				endGame('draw')
-				return true
-			}
-			
-
-			return false*/
 		}
 
 		function endGame(state, winArr){
@@ -310,8 +248,9 @@ module.exports = function(app, io, gameRooms, players) {
 
 			io.to(that.id).emit('endGame', {
 				state: state,
-				win: that.sign,
 				statistic: that.statistic,
+				win: that.sign,
+				winArr: winArr
 			})
 		}
 

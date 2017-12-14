@@ -24,7 +24,8 @@ socket.on('endGame', props => {
 	var state = props.state
 	var statistic = props.statistic
 	var win = props.win
-	game.endGame(state,statistic,win)
+	var winArr = props.winArr
+	game.endGame(state, statistic, win, winArr)
 })
 
 socket.on('enable', yes => {
@@ -203,8 +204,14 @@ function Battlefield(wrap, mask, socket){
 		td.innerHTML = sign		
 	}
 
-	this.endGame = function(state,statistic,win){
-		
+	this.endGame = function(state, statistic, win, winArr){
+		switch(state){
+			case 'draw' :
+						break;
+			case 'win'	:
+						break;
+		}
+		l(winArr)
 	}
 
 
