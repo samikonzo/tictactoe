@@ -4,7 +4,7 @@
   "description": "",
   "main": "app.js",
   "scripts": {
-    "dev": "nodemon --watch app.js --watch public/index.html --watch app/server.js --watch public/client.js -w public/stylesheet.css -w public/index-blank.html -w app/server-app.js"
+    "dev": "nodemon app.js"
   },
   "keywords": [],
   "author": "",
